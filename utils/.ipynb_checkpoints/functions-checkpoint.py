@@ -1,79 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from air_hockey_challenge.air_hockey_challenge.utils import inverse_kinematics
-
-
-def get_dummy_action_airhockey(robot, ram):
-    
-    home_ee = robot.get_ee_pose(ram)
-    home_joint_pos = robot.get_joint_pos(ram)
-    joint_vel_des = np.array([0, 0, 0])
-        
-    return np.vstack((home_joint_pos, joint_vel_des))
-
-
-def import_ram_airhockey(ram_all):
-    ram = np.zeros(6, )
-    ram[0]=ram_all[0]
-    ram[1]= ram_all[1]
-    ram[2]= ram_all[3]
-    ram[3]=ram_all[4]
-    ram[4]=ram_all[6]
-    ram[5]=ram_all[7]
-    return ram
-
-def computeJointValues(robot, ee_pos_des, joint_pos_current):
-        
-     # ee_pos_des must be in the robot reference frame
-    success, joint_pos_des = inverse_kinematics(robot.robot_model, robot.robot_data,
-                                                    ee_pos_des, initial_q=joint_pos_current)
-    return joint_pos_des
-
-
-def define_actions(home_ee, home_joint, init_obs, robot):
-    
-        if init_obs[1] > 0:
-            init_obs[1] +=0.2
-        elif init_obs[1] < 0:
-            init_obs[1] -=0.2   
-                  
-        pos0 = [0.6, 0, home_ee[2]]
-        pos1 = [1, 0, home_ee[2]]
-        pos2 = [1, 0.1, home_ee[2]]
-        pos3 = [0.9, 0.25, home_ee[2]]
-        pos4= [0.9, -0.25, home_ee[2]]
-        # delta = 0.05
-        # curr_pos=self.get_joint_pos(obs)
-        # goRight = curr_pos + [0, -delta, 0]
-        # goLeft = curr_pos + [0, delta, 0]
-        # goForw = curr_pos + [delta, 0, 0]
-        # goBack = curr_pos + [-delta, 0, 0]
-        
-        # pos_actions_list=[goRight, goLeft, goForw, goBack]
-        pos_actions_list = [pos0, pos1]
-
-        actions2joints = []
-        home_joint_pos= home_joint[0]
-        for pos in pos_actions_list:
-            actions2joints.append(computeJointValues(robot, pos, home_joint_pos))
-
-        return actions2joints
-
-def cat2act_airhockey(cat, init_obs, robot, frame):
-    # jointValues=np.zeros(3,)
-    home_ee=init_obs[6:9]
-    home_joint_pos=get_dummy_action_airhockey(robot, init_obs)
-    # if frame == 1:
-    if frame == 1:
-        cat2act_airhockey.jointValues = define_actions(home_ee, home_joint_pos, init_obs, robot)  
- 
-    cat2act_airhockey.jointsOfAction = cat2act_airhockey.jointValues[cat]
-    joint_pos_des = np.array([cat2act_airhockey.jointsOfAction[0], cat2act_airhockey.jointsOfAction[1], cat2act_airhockey.jointsOfAction[2]])
-    # joint_pos_des = np.array([0,0,0])
-    joint_vel_des = np.array([0, 0, 0])
-        
-    return np.vstack((joint_pos_des, joint_vel_des))
-
 
 def get_ball_and_paddle_coordinates(state, print_state=False):
     # Extract ball and paddle coordinates from the game state
@@ -148,7 +74,7 @@ def plot_rewards(REWARDS,REWARDS_MEAN,S_agent,S_model,OUT,RAM,RAM_PRED,R,R_PRED,
     ax2.legend()
 
     plt.subplot(4,2,3)
-    plt.imshow(1-np.array(S_agent)[:,0:1019].T,aspect='auto',cmap ='gray')
+    plt.imshow(1-np.array(S_agent)[:,0:512].T,aspect='auto',cmap ='gray')
     
     plt.subplot(4,2,5)
     plt.plot(np.array(OUT))

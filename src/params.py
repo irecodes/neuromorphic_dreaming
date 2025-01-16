@@ -43,8 +43,8 @@ def agent_param_group():
     param_group.param_map["NPDPIE_THR_S_P"].coarse_value = 5
     param_group.param_map["NPDPIE_THR_S_P"].fine_value = 200
     # # synapses weight
-    param_group.param_map["PS_WEIGHT_EXC_S_N"].coarse_value = 5
-    param_group.param_map["PS_WEIGHT_EXC_S_N"].fine_value = 47
+    param_group.param_map["PS_WEIGHT_EXC_S_N"].coarse_value = 7
+    param_group.param_map["PS_WEIGHT_EXC_S_N"].fine_value = 130
 
     ### GABA_A snyapse ###
     # time constant (leakage)

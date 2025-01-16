@@ -66,8 +66,8 @@ class PongAgent:
         for i in range(4):
             model.update_parameter_group(agent_param_group, i, 0)
             model.update_parameter_group(agent_param_group, i, 1)
-            model.update_parameter_group(agent_param_group, i, 2)
-            model.update_parameter_group(agent_param_group, i, 3)
+            model.update_parameter_group(model_param_group, i, 2)
+            model.update_parameter_group(model_param_group, i, 3)
 
         
     def init_policy_readout(self):
@@ -109,31 +109,24 @@ class PongAgent:
         self.spike_gens_policy = n.NeuronGroup(0, 0, list(range(self.num_spikegens)), True)
         
         # Create hidden neurons for policy
-        neuron_ids_all = list(range(1, self.num_hidden_neurons//4 + 1))
+        neuron_ids_all = list(range(1, self.num_hidden_neurons//2 + 1))
         neuron_group_policy_c0 = n.NeuronGroup(self.target_chip, 0, neuron_ids_all)
         neuron_group_policy_c1 = n.NeuronGroup(self.target_chip, 1, neuron_ids_all)
-        neuron_group_policy_c2 = n.NeuronGroup(self.target_chip, 2, neuron_ids_all)
-        neuron_group_policy_c3 = n.NeuronGroup(self.target_chip, 3, neuron_ids_all)
         
         # Connect Input Neurons to Hidden Neurons
         #### 8 presynaptic connections per postsynaptic neuron (4 weights) ####
         num_connections = 8
         num_weights = 4
         num_pre_neurons = self.num_spikegens
-        num_neurons_per_core = self.num_hidden_neurons//4
+        num_neurons_per_core = self.num_hidden_neurons//2
         prob = num_connections/num_pre_neurons
         arr_i, arr_j = self.set_all_to_all(self.num_spikegens, num_neurons_per_core, p = prob, num_weights=num_weights)
         self.connect_populations(self.net_gen, self.spike_gens_policy.neurons, neuron_group_policy_c0.neurons, arr_i, arr_j, dyn1.Dynapse1SynType.NMDA)
         arr_i, arr_j = self.set_all_to_all(self.num_spikegens, num_neurons_per_core, p = prob, num_weights=num_weights)
         self.connect_populations(self.net_gen, self.spike_gens_policy.neurons, neuron_group_policy_c1.neurons, arr_i, arr_j, dyn1.Dynapse1SynType.NMDA)
-        arr_i, arr_j = self.set_all_to_all(self.num_spikegens, num_neurons_per_core, p = prob, num_weights=num_weights)
-        self.connect_populations(self.net_gen, self.spike_gens_policy.neurons, neuron_group_policy_c2.neurons, arr_i, arr_j, dyn1.Dynapse1SynType.NMDA)
-        arr_i, arr_j = self.set_all_to_all(self.num_spikegens, num_neurons_per_core, p = prob, num_weights=num_weights)
-        self.connect_populations(self.net_gen, self.spike_gens_policy.neurons, neuron_group_policy_c3.neurons, arr_i, arr_j, dyn1.Dynapse1SynType.NMDA)
-        
             
         # Add neurons to monitor (to record spikes from)
-        self.monitored_neurons += neuron_group_policy_c0.tuple_neuron_ids + neuron_group_policy_c1.tuple_neuron_ids + neuron_group_policy_c2.tuple_neuron_ids + neuron_group_policy_c3.tuple_neuron_ids
+        self.monitored_neurons += neuron_group_policy_c0.tuple_neuron_ids + neuron_group_policy_c1.tuple_neuron_ids
         
     def init_model_net(self):
         # Create spike generators
@@ -141,7 +134,6 @@ class PongAgent:
         
         # Create hidden neurons for model
         neuron_ids_all = list(range(1, self.num_hidden_neurons//2 + 1))
-
         neuron_group_model_c2 = n.NeuronGroup(self.target_chip, 2, neuron_ids_all)
         neuron_group_model_c3 = n.NeuronGroup(self.target_chip, 3, neuron_ids_all)
         
@@ -271,7 +263,7 @@ class PongAgent:
         
     def compute_gradient_policy(self, r):
         discount_rate = 0.998
-        ac_vector = np.zeros((2,))
+        ac_vector = np.zeros((3,))
         ac_vector[self.action] = 1
         
         # compute the policy entropy
