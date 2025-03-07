@@ -316,23 +316,34 @@ class PongAgent:
         # Transform encoding into spike trains and upload them to the chip
         self.set_fpga_spike_gen_rate(self.encoding)
         
-    def place_cell_encoding(self, ram, sigma=20.0):
+    def place_cell_encoding(self, ram, sigma=16.0):
         # Create (place cell) activity variables for each input spike generator
-        num_place_cells_per_variable = self.num_spikegens//4
-        place_cells_ball_x = np.zeros(num_place_cells_per_variable)
-        place_cells_ball_y = np.zeros(num_place_cells_per_variable)
-        place_cells_cpu_y = np.zeros(num_place_cells_per_variable)
-        place_cells_player_y = np.zeros(num_place_cells_per_variable)
+        num_state_variables = 6
+        num_place_cells_per_variable = self.num_spikegens//num_state_variables
+        place_cells_puck_x = np.zeros(num_place_cells_per_variable)
+        place_cells_puck_y = np.zeros(num_place_cells_per_variable)
+        place_cells_puck_x_dot = np.zeros(num_place_cells_per_variable)
+        place_cells_puck_y_dot = np.zeros(num_place_cells_per_variable)
+        place_cells_end_effector_x = np.zeros(num_place_cells_per_variable)
+        place_cells_end_effector_y = np.zeros(num_place_cells_per_variable)
         
         # Compute activity for each input spike generator 
         for i in range(num_place_cells_per_variable):
-            place_cells_ball_x[i] = self.gaussian(ram[0], i*266/num_place_cells_per_variable - 10, sigma)
-            place_cells_ball_y[i] = self.gaussian(ram[1], i*266/num_place_cells_per_variable - 10, sigma)
-            place_cells_cpu_y[i] = self.gaussian(ram[2], i*266/num_place_cells_per_variable - 10, sigma)
-            place_cells_player_y[i] = self.gaussian(ram[3], i*266/num_place_cells_per_variable - 10, sigma)
+            place_cells_puck_x[i] = self.gaussian(ram[0], i*266/num_place_cells_per_variable - 10, sigma)
+            place_cells_puck_y[i] = self.gaussian(ram[1], i*266/num_place_cells_per_variable - 10, sigma)
+            place_cells_puck_x_dot[i] = self.gaussian(ram[2], i*266/num_place_cells_per_variable - 10, sigma)
+            place_cells_puck_y_dot[i] = self.gaussian(ram[3], i*266/num_place_cells_per_variable - 10, sigma)
+            place_cells_end_effector_x[i] = self.gaussian(ram[4], i*266/num_place_cells_per_variable - 10, sigma)
+            place_cells_end_effector_y[i] = self.gaussian(ram[5], i*266/num_place_cells_per_variable - 10, sigma)
         
         scale = 7000
-        return scale*np.concatenate((place_cells_ball_x, place_cells_ball_y, place_cells_cpu_y, place_cells_player_y))
+        return scale*np.concatenate((place_cells_puck_x,
+                                     place_cells_puck_y,
+                                     place_cells_puck_x_dot,
+                                     place_cells_puck_y_dot,
+                                     place_cells_end_effector_x,
+                                     place_cells_end_effector_y,
+                                     np.zeros(self.num_spikegens%num_state_variables)))
 
     def gaussian(self, x, mu, sigma):
         # Calculate the value of a Gaussian distribution at a given position

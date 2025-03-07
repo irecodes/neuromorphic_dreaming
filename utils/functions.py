@@ -14,12 +14,12 @@ def get_dummy_action_airhockey(robot, ram):
 
 def import_ram_airhockey(ram_all):
     ram = np.zeros(6, )
-    ram[0]=ram_all[0]
-    ram[1]= ram_all[1]
-    ram[2]= ram_all[3]
-    ram[3]=ram_all[4]
-    ram[4]=ram_all[6]
-    ram[5]=ram_all[7]
+    ram[0]=ram_all[0] # puck x
+    ram[1]= ram_all[1] # puck y
+    ram[2]= ram_all[3] # puck x'
+    ram[3]=ram_all[4] # puck y'
+    ram[4]=ram_all[6] # end effector x
+    ram[5]=ram_all[7] # end effector y
     return ram
 
 def computeJointValues(robot, ee_pos_des, joint_pos_current):
@@ -148,18 +148,21 @@ def plot_rewards(REWARDS,REWARDS_MEAN,S_agent,S_model,OUT,RAM,RAM_PRED,R,R_PRED,
     ax2.legend()
 
     plt.subplot(4,2,3)
-    plt.imshow(1-np.array(S_agent)[:,0:1019].T,aspect='auto',cmap ='gray')
-    
+    plt.imshow(1-np.array(S_agent)[:,0:1019].T,aspect='auto',cmap ='gray', label=f'S_agent')
+    plt.ylabel('S_agent')
+
     plt.subplot(4,2,5)
     plt.plot(np.array(OUT))
     plt.ylim(-.1,1.1)
     plt.ylabel('policy')
 
-
     ax = plt.subplot(4,2,4)
     ax.plot(np.array(RAM)[:,0], label=f'ball x')
+    plt.ylabel('ball x')
     if RAM_PRED:
        ax.plot(np.array(RAM_PRED)[:,0], label=f'ball x (pred)')
+       plt.ylabel("ball x (pred)")
+    plt.legend()
 
     plt.subplot(4,2,7)
     x = np.linspace(50, 50*len(REWARDS_MEAN), len(REWARDS_MEAN))
@@ -171,10 +174,12 @@ def plot_rewards(REWARDS,REWARDS_MEAN,S_agent,S_model,OUT,RAM,RAM_PRED,R,R_PRED,
     ax.plot(np.array(RAM)[:,1], label=f'ball y')
     ax.plot(np.array(RAM)[:,2], label=f'cpu y')
     ax.plot(np.array(RAM)[:,3], label=f'player y')
+    ax.set_ylabel('y coords')
     if RAM_PRED:
         ax.plot(np.array(RAM_PRED)[:,1], label=f'ball y (pred)')
         ax.plot(np.array(RAM_PRED)[:,2], label=f'cpu y (pred)')
         ax.plot(np.array(RAM_PRED)[:,3], label=f'player y (pred)')
+    ax.legend()
 
     plt.savefig(filename, facecolor='w', edgecolor='w')
     plt.close()
