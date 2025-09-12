@@ -37,8 +37,8 @@ class PongAgent:
         # Set target chip for spike generators
         self.target_chip = self.config.getint('DEFAULT', 'chip_id')
 
-        self.num_spikegens = 4*self.spike_gens_per_input_value
-        self.spikegen_ids = range(self.num_spikegens + 3)
+        self.num_spikegens = 6*self.spike_gens_per_input_value
+        self.spikegen_ids = range(1, self.num_spikegens + 4)
         
         # Define network configuration
         self.net_gen = n.NetworkGenerator()
@@ -77,7 +77,7 @@ class PongAgent:
         self.adam_out = Adam(alpha=alpha, drop=0.99, drop_time=10000)
         
         # Initialize policy readout weights
-        self.Jout = np.random.normal(0.0, 0.1, size=(self.num_actions, self.num_hidden_neurons))
+        self.Jout = np.random.normal(0.0, 0.0001, size=(self.num_actions, self.num_hidden_neurons))
         self.dJout_aggregate=0
         self.dJout_entropy=0
         self.dJfilt_out = 0
@@ -94,7 +94,7 @@ class PongAgent:
         self.adam_out_r = Adam(alpha=alpha_r, drop=.99, drop_time=10000)
         
         # Initialize state + reward readout weights
-        self.Jout_s_pred = np.zeros((4, self.num_hidden_neurons))
+        self.Jout_s_pred = np.zeros((6, self.num_hidden_neurons))
         self.Jout_r_pred = np.zeros((1, self.num_hidden_neurons))
 
         self.dJout_s_aggregate = 0
@@ -106,7 +106,7 @@ class PongAgent:
 
     def init_policy_net(self):
         # Create spike generators
-        self.spike_gens_policy = n.NeuronGroup(0, 0, list(range(self.num_spikegens)), True)
+        self.spike_gens_policy = n.NeuronGroup(0, 0, np.arange(1, self.num_spikegens+1), True)
         
         # Create hidden neurons for policy
         neuron_ids_all = list(range(1, self.num_hidden_neurons//4 + 1))
@@ -137,7 +137,7 @@ class PongAgent:
         
     def init_model_net(self):
         # Create spike generators
-        self.spike_gens_model_all = n.NeuronGroup(0, 0, list(range(self.num_spikegens + 3)), True)
+        self.spike_gens_model_all = n.NeuronGroup(0, 0, list(range(1, self.num_spikegens + 6 + 1)), True)
         
         # Create hidden neurons for model
         neuron_ids_all = list(range(1, self.num_hidden_neurons//2 + 1))
@@ -218,7 +218,7 @@ class PongAgent:
         self.state_out_policy = self.state_out_policy * self.itau_ro + state * (1 - self.itau_ro) * 5.0
         
         # Inner product of filtered spike rates and linear readout weights
-        y = np.dot(self.Jout, self.state_out_policy)
+        y = np.dot(self.Jout, self.state_out_policy/20)
         y[y>50] = 50
         
         # Compute softmax to get action probabilities
@@ -316,7 +316,7 @@ class PongAgent:
         # Transform encoding into spike trains and upload them to the chip
         self.set_fpga_spike_gen_rate(self.encoding)
         
-    def place_cell_encoding(self, ram, sigma=16.0):
+    def place_cell_encoding(self, ram, sigma=0.04):
         # Create (place cell) activity variables for each input spike generator
         num_state_variables = 6
         num_place_cells_per_variable = self.num_spikegens//num_state_variables
@@ -328,15 +328,27 @@ class PongAgent:
         place_cells_end_effector_y = np.zeros(num_place_cells_per_variable)
         
         # Compute activity for each input spike generator 
-        for i in range(num_place_cells_per_variable):
-            place_cells_puck_x[i] = self.gaussian(ram[0], i*266/num_place_cells_per_variable - 10, sigma)
-            place_cells_puck_y[i] = self.gaussian(ram[1], i*266/num_place_cells_per_variable - 10, sigma)
-            place_cells_puck_x_dot[i] = self.gaussian(ram[2], i*266/num_place_cells_per_variable - 10, sigma)
-            place_cells_puck_y_dot[i] = self.gaussian(ram[3], i*266/num_place_cells_per_variable - 10, sigma)
-            place_cells_end_effector_x[i] = self.gaussian(ram[4], i*266/num_place_cells_per_variable - 10, sigma)
-            place_cells_end_effector_y[i] = self.gaussian(ram[5], i*266/num_place_cells_per_variable - 10, sigma)
+        #for i in range(num_place_cells_per_variable):
+        #    place_cells_puck_x[i] = self.gaussian(ram[0], i*266/num_place_cells_per_variable, sigma)
+        #    place_cells_puck_y[i] = self.gaussian(ram[1], i*266/num_place_cells_per_variable, sigma)
+        #    place_cells_puck_x_dot[i] = self.gaussian(ram[2], i*266/num_place_cells_per_variable, sigma)
+        #    place_cells_puck_y_dot[i] = self.gaussian(ram[3], i*266/num_place_cells_per_variable, sigma)
+        #    place_cells_end_effector_x[i] = self.gaussian(ram[4], i*266/num_place_cells_per_variable, sigma)
+        #    place_cells_end_effector_y[i] = self.gaussian(ram[5], i*266/num_place_cells_per_variable, sigma)
+
         
-        scale = 7000
+        # Compute activity for each input spike generator 
+        for i in range(num_place_cells_per_variable):
+            place_cells_puck_x[i] = self.gaussian(ram[0]/5, (i/num_place_cells_per_variable)-0.5, sigma)
+            place_cells_puck_y[i] = self.gaussian(ram[1]/5, (i/num_place_cells_per_variable)-0.5, sigma)
+            place_cells_puck_x_dot[i] = self.gaussian(ram[2]/5, (i/num_place_cells_per_variable)-0.5, sigma)
+            place_cells_puck_y_dot[i] = self.gaussian(ram[3]/5, (i/num_place_cells_per_variable)-0.5, sigma)
+            place_cells_end_effector_x[i] = self.gaussian(ram[4]/5, (i/num_place_cells_per_variable)-0.5, sigma)
+            place_cells_end_effector_y[i] = self.gaussian(ram[5]/5, (i/num_place_cells_per_variable)-0.5, sigma)
+        
+        scale = 20
+        
+        #scale = 7000
         return scale*np.concatenate((place_cells_puck_x,
                                      place_cells_puck_y,
                                      place_cells_puck_x_dot,
@@ -380,9 +392,11 @@ class PongAgent:
 
         # Upload the spike trains        
         self.fpga_spike_gen.stop()
+        #time.sleep(0.01)
         ut.set_fpga_spike_gen(self.fpga_spike_gen, spike_times=spiketrain[:,0], indices=spiketrain[:,1].astype(int), target_chips=[self.target_chip]*len(spiketrain), isi_base=900, repeat_mode=True, is_first=self.is_first)
         if self.is_first:
             self.is_first = False
+        #time.sleep(0.01)
         self.fpga_spike_gen.start()
 
         # Plot the spike trains (only for debugging purposes)

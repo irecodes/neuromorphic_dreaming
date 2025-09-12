@@ -38,7 +38,7 @@ def define_actions(home_ee, home_joint, init_obs, robot):
             init_obs[1] -=0.2   
                   
         pos0 = [0.6, 0, home_ee[2]]
-        pos1 = [1, 0, home_ee[2]]
+        pos1 = [1.1, 0, home_ee[2]]
         pos2 = [1, 0.1, home_ee[2]]
         pos3 = [0.9, 0.25, home_ee[2]]
         pos4= [0.9, -0.25, home_ee[2]]
@@ -125,7 +125,7 @@ def plot_spikes(S):
     plt.close()
     return
 
-def plot_rewards(REWARDS,REWARDS_MEAN,S_agent,S_model,OUT,RAM,RAM_PRED,R,R_PRED,ENTROPY_MEAN,filename = 'figure.png'):
+def plot_rewards(REWARDS,REWARDS_MEAN,SUCCESS, SUCCESS_MEAN, S_agent,S_model,OUT,RAM,RAM_PRED,R,R_PRED,ENTROPY_MEAN,filename = 'figure.png'):
 
     plt.figure(figsize=(8, 11), dpi=100)
     plt.suptitle('Number of spikes: ' + str(np.sum(S_agent)), fontsize=11)
@@ -157,12 +157,12 @@ def plot_rewards(REWARDS,REWARDS_MEAN,S_agent,S_model,OUT,RAM,RAM_PRED,R,R_PRED,
     plt.ylabel('policy')
 
     ax = plt.subplot(4,2,4)
-    ax.plot(np.array(RAM)[:,0], label=f'ball x')
-    plt.ylabel('ball x')
-    if RAM_PRED:
-       ax.plot(np.array(RAM_PRED)[:,0], label=f'ball x (pred)')
-       plt.ylabel("ball x (pred)")
-    plt.legend()
+    ax.plot(np.array(SUCCESS_MEAN))
+    plt.ylabel('Success mean')
+    #if RAM_PRED:
+    #   ax.plot(np.array(RAM_PRED)[:,0], label=f'Success')
+    #   plt.ylabel("ball x (pred)")
+    #plt.legend()
 
     plt.subplot(4,2,7)
     x = np.linspace(50, 50*len(REWARDS_MEAN), len(REWARDS_MEAN))
@@ -171,10 +171,13 @@ def plot_rewards(REWARDS,REWARDS_MEAN,S_agent,S_model,OUT,RAM,RAM_PRED,R,R_PRED,
     plt.xlabel('iterations')
 
     ax = plt.subplot(4,2,6)
-    ax.plot(np.array(RAM)[:,1], label=f'ball y')
-    ax.plot(np.array(RAM)[:,2], label=f'cpu y')
-    ax.plot(np.array(RAM)[:,3], label=f'player y')
-    ax.set_ylabel('y coords')
+    ax.plot(np.array(RAM)[:,0] - 1.51, label=f'puck x')
+    ax.plot(np.array(RAM)[:,1], label=f'puck y')
+    ax.plot(np.array(RAM)[:,2], label=f'puck v_x')
+    ax.plot(np.array(RAM)[:,3], label=f'puck v_y')
+    ax.plot(np.array(RAM)[:,4], label=f'effector x')
+    ax.plot(np.array(RAM)[:,5], label=f'effector y')
+    ax.set_ylabel('State variables')
     if RAM_PRED:
         ax.plot(np.array(RAM_PRED)[:,1], label=f'ball y (pred)')
         ax.plot(np.array(RAM_PRED)[:,2], label=f'cpu y (pred)')
